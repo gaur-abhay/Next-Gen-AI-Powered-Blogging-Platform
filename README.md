@@ -74,7 +74,7 @@ The primary goal is to provide users with a seamless experience while optimizing
     - Shares
     
     In addition, a **suggestions section** provides tips on how to improve future posts based on engagement data (e.g., adjust post length, change tone).
-    
+
 
 ## 🛠️**Technology Stack**
 
@@ -87,6 +87,7 @@ The primary goal is to provide users with a seamless experience while optimizing
 | **FastAPI** | Core backend logic and AI module for content suggestions and analysis |
 | **Postman** | API testing and collaboration |
 | **Gemini** | Powers the AI-driven content suggestions and analysis |
+
 
 ### 🚀**Deployment Strategy**
 
@@ -109,21 +110,21 @@ The primary goal is to provide users with a seamless experience while optimizing
 
 ---
 
-### **⚠️Challenges & Solutions**
+### ⚠️Challenges & Solutions
 
 - **Challenge: Efficiently Managing Both Unstructured and Structured Data**
-    
+
     **Solution**: **Azure Cosmos DB** handles dynamic, unstructured content like blog post and engagement data, while **Azure SQL DB** stores structured data like user details and post metadata. This separation ensures optimal performance and scalability for different data types.
     
 - **Challenge: Ensuring Scalability with Minimal Infrastructure Overhead**
-    
-    **Solution**: Utilized **Docker** for containerization and **Azure Container Instances (ACI)** for deployment, avoiding complex infrastructure setup while still providing scalability. This allows the application to scale based on demand without the overhead of managing servers.
-    
-- **Challenge: Minimizing Read/Write Operations in Azure Cosmos DB**
-    
-    **Solution**: Implemented strategies to batch read/write operations, reducing the number of interactions with Cosmos DB. This optimization helps minimize costs associated with data transactions and improves performance by limiting unnecessary database calls.
-    
 
+    **Solution**: Utilized **Docker** for containerization and **Azure Container Instances (ACI)** for deployment, avoiding complex infrastructure setup while still providing scalability. This allows the application to scale based on demand without the overhead of managing servers.
+
+- **Challenge: Minimizing Read/Write Operations in Azure Cosmos DB**
+
+    **Solution**: Implemented strategies to batch read/write operations, reducing the number of interactions with Cosmos DB. This optimization helps minimize costs associated with data transactions and improves performance by limiting unnecessary database calls.
+
+    
 ---
 
 ### **🏁Conclusion**
