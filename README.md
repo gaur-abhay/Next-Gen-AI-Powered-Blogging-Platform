@@ -7,13 +7,13 @@
 ## 📑 **Table of Contents**
 
 1. [Project Overview](#project-overview)
-2. [Core Features](core-features)
-3. [Technology Stack](technology-stack)
-4. [Deployment Strategy](deployment-strategy)
-5. [API Documentation](api-documentation)
-6. [Future Enhancement](future-enhancement)
-7. [Challenges & Solutions](challenges-&-solutions)
-8. [Conclusion](conclusion)
+2. [Core Features](#core-features)
+3. [Technology Stack](#technology-stack)
+4. [Deployment Strategy](#deployment-strategy)
+5. [API Documentation](#api-documentation)
+6. [Future Enhancements](#future-enhancements)
+7. [Challenges & Solutions](#challenges--solutions)
+8. [Conclusion](#conclusion)
 
 ## **🚀Project Overview**
 
