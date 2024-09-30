@@ -76,7 +76,7 @@ The primary goal is to provide users with a seamless experience while optimizing
     In addition, a **suggestions section** provides tips on how to improve future posts based on engagement data (e.g., adjust post length, change tone).
     
 
-## 🛠️ **Technology Stack**
+## 🛠️**Technology Stack**
 
 | Technology | Purpose |
 | --- | --- |
@@ -88,7 +88,7 @@ The primary goal is to provide users with a seamless experience while optimizing
 | **Postman** | API testing and collaboration |
 | **Gemini** | Powers the AI-driven content suggestions and analysis |
 
-### **🚀Deployment Strategy**
+### 🚀**Deployment Strategy**
 
 - **Development Environment**: Developed locally using PyCharm with Docker to simulate the production environment.
 - **Deployment**: Manual deployment via **Azure CLI** and **Azure Portal** to **ACI** for simplicity, ensuring no additional complexity from CI/CD pipelines at this stage.
