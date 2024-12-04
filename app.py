@@ -1,12 +1,12 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from starlette.requests import Request
-from routes import user_routes, Blog
+from routes import user_routes, blog_routes
 
 app = FastAPI()
 
 app.include_router(user_routes.api_router, prefix="/user", tags=["User"])
-app.include_router(Blog.api_router, prefix="/blogs", tags=["Blog"])
+app.include_router(blog_routes.api_router, prefix="/blog", tags=["Blog"])
 
 
 @app.exception_handler(HTTPException)
