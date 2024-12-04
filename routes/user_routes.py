@@ -1,71 +1,52 @@
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
-from routes import oauth2_scheme, supabase_manager
-from schemas.UserSchema import UserSignUp, UserOnboarding
+from sqlalchemy.orm import Session
+
+from routes import db_manager, oauth2_scheme
+from schemas.UserSchema import UserSignUp, UserSignIn, UserOnboarding
+from models.User import User
+from services.UserFacade import UserHandler
 
 api_router = APIRouter()
 
 
-@api_router.post("/sign-up")
+@api_router.post("/signup")
 async def register_user(
         request_data: UserSignUp,
+        db: Session = Depends(db_manager.get_db),
 ):
-    supabase = supabase_manager.get_supabase_db()
-    # Register the user in auth.users table
-    try:
-        auth_result = supabase.auth.sign_up({"email": request_data.email, "password": request_data.password,})
-    except Exception as e:
-        if "User already registered" in e.message:
-            HTTPException(status_code=400, detail="User already registered")
-        else:
-            HTTPException(status_code=500, detail="Error Occur in User Registration")
-
-        # Create a new record in Users table
-    supabase.table("User").insert({"id": auth_result.user.id, }).execute()
-
-    return {"message": "User Register Successfully", "onboarded": False, "token": auth_result.session.access_token}
+    return UserHandler.register_user(db, request_data.email, request_data.password)
 
 
-@api_router.post("/sign-in")
+@api_router.post("/signin")
 async def login_user(
-        request_data: UserSignUp,
+        request_data: UserSignIn,
+        db: Session = Depends(db_manager.get_db),
 ):
-    supabase = supabase_manager.get_supabase_db()
-    try:
-        auth_result = supabase.auth.sign_in_with_password({"email": request_data.email, "password": request_data.password})
-    except Exception as e:
-        if "Invalid login credentials" in e.message:
-            HTTPException(status_code=400, detail="Invalid login credentials")
-        else:
-            HTTPException(status_code=500, detail="Error Occur in User Login")
-
-    result = supabase.table("User").select('onboarded').eq('id', auth_result.user.id).execute()
-    onboarded = result.data[0]["onboarded"]
-
-    return {"message": "User Login Successfully", "onboarded": onboarded, "token": auth_result.session.access_token}
+    return UserHandler.login_user(db, request_data.email, request_data.password)
 
 
-@api_router.post("/onboarding")
+@api_router.post("/onboard")
 async def user_onboarding(
         request_data: UserOnboarding,
-        token: str = Depends(oauth2_scheme),
+        db: Session = Depends(db_manager.get_db),
+        token: str = Depends(oauth2_scheme)
 ):
-    supabase = supabase_manager.get_supabase_db()
-    auth_user = supabase.auth.get_user(token)
+    user = UserHandler.get_user(db, token)
 
-    updated_user, count = supabase.table("User").update({
-        "username": request_data.username,
-        "job_title": request_data.job_title,
-        "interest": request_data.interest,
-    }).eq("id", auth_user.user.id).execute()
+    return UserHandler.onboard_user(
+        db,
+        user,
+        request_data.username,
+        request_data.job_title,
+        request_data.interest
+    )
 
-    return {"message": "User Onboarded Successfully"}
 
-
-@api_router.post("/profile")
+@api_router.get("/profile")
 async def user_profile(
-        request_data: UserSignUp,
-        token: str = Depends(oauth2_scheme),
+        db: Session = Depends(db_manager.get_db),
+        token: str = Depends(oauth2_scheme)
 ):
-    supabase = supabase_manager.get_supabase_db()
-    auth_user = supabase.auth.get_user(token)
+    user = UserHandler.get_user(db, token)
+    return user.as_dict()

@@ -1,13 +1,11 @@
 from pydantic import BaseModel
 
 class UserSignUp(BaseModel):
-    name: str
     email: str
     password: str
 
-class UserSignIn(BaseModel):
-    email: str
-    password: str
+class UserSignIn(UserSignUp):
+    pass
 
 class UserOnboarding(BaseModel):
     username: str

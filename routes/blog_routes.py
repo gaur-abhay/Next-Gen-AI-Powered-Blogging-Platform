@@ -1,11 +1,14 @@
 import json
 
 from fastapi import APIRouter, Depends, UploadFile, File, Form, Body
-from routes import oauth2_scheme, supabase_manager
+from sqlalchemy.orm import Session
+
+from routes import oauth2_scheme, db_manager
 from typing import Optional
 import uuid
 from datetime import datetime
 from schemas.BlogSchema import CreateBlogSchema, GenerateBlogSchema
+from services.UserFacade import UserHandler
 from utils.Cloudinary import Cloudinary
 from utils.NoSqlHandler import NoSqlHandler
 from utils.Gemini import GeminiUtils
@@ -13,15 +16,14 @@ from utils.Gemini import GeminiUtils
 api_router = APIRouter()
 
 
-@api_router.post("/create-blog")
-async def translate_user_message(
-        blog_data: str = Body(...),
+@api_router.post("/")
+async def create_blog(
+        blog_data: dict = Body(...),
         image_file: Optional[UploadFile] = Form(None),
         token: str = Depends(oauth2_scheme),
+        db: Session = Depends(db_manager.get_db)
 ):
-    supabase = supabase_manager.get_supabase_db()
-    auth_user = supabase.auth.get_user(token)
-    blog_data = json.loads(blog_data)
+    user = UserHandler.get_user(db, token)
 
     image_url = None
     if image_file:
@@ -30,7 +32,7 @@ async def translate_user_message(
 
     document = {
         "id": str(uuid.uuid4()),
-        "userid:": auth_user.user.id,
+        "userid:": user.id,
         "title": blog_data["title"],
         "description": blog_data["description"],
         "image_url": image_url,
@@ -45,55 +47,50 @@ async def translate_user_message(
     return {"message": "Blog Created Successfully"}
 
 
-@api_router.post("/generate_blog")
-async def generate_blog_for_user(
-        request_data: GenerateBlogSchema,
-        token: str = Depends(oauth2_scheme),
-        gemini_utils: GeminiUtils = Depends(GeminiUtils)
-):
-    supabase = supabase_manager.get_supabase_db()
-    auth_user = supabase.auth.get_user(token)
-
-    response = gemini_utils.generate_blog_post(request_data.title, request_data.topic, request_data.tone)
-
-    return {"title": response["title"], "body": response["body"]}
-
-
-@api_router.get("/delete_blog/{blog_guid}")
+@api_router.delete("/{blog_guid}")
 async def get_all_blogs(
-    blog_guid: str,
-    token: str = Depends(oauth2_scheme),
+        blog_guid: str,
+        token: str = Depends(oauth2_scheme),
+        db: Session = Depends(db_manager.get_db)
 ):
-    supabase = supabase_manager.get_supabase_db()
-    auth_user = supabase.auth.get_user(token)
+    user = UserHandler.get_user(db, token)
 
     NoSqlHandler.delete_document(blog_guid, "Blogs")
 
     return {"message": "Blog Deleted Successfully"}
 
-
-@api_router.get("/blog/{blog_guid}")
-async def get_blog(
-    blog_guid: str,
-    token: str = Depends(oauth2_scheme),
+@api_router.get("/search")
+async def search_blog(
+        q: str,
+        f: Optional[str] = None,
+        token: str = Depends(oauth2_scheme),
+        db: Session = Depends(db_manager.get_db)
 ):
-    supabase = supabase_manager.get_supabase_db()
-    auth_user = supabase.auth.get_user(token)
+    user = UserHandler.get_user(db, token)
+
+
+@api_router.get("/{blog_guid}")
+async def get_blog(
+        blog_guid: str,
+        token: str = Depends(oauth2_scheme),
+        db: Session = Depends(db_manager.get_db)
+):
+    user = UserHandler.get_user(db, token)
 
     document = NoSqlHandler.read_document(blog_guid, "Blogs")
 
-    if document["userid"] == auth_user.user.id:
+    if document["userid"] == user.id:
         return {"blog": document, "write_access": True}
 
     return {"blog": document, "write_access": False}
 
 
-@api_router.get("/all_blogs")
+@api_router.get("/all-blogs")
 async def get_all_blogs(
-    token: str = Depends(oauth2_scheme),
+        token: str = Depends(oauth2_scheme),
+        db: Session = Depends(db_manager.get_db)
 ):
-    supabase = supabase_manager.get_supabase_db()
-    auth_user = supabase.auth.get_user(token)
+    user = UserHandler.get_user(db, token)
 
     documents = NoSqlHandler.read_all("Blogs")
 
@@ -102,17 +99,16 @@ async def get_all_blogs(
     return {"all_blogs": all_blogs}
 
 
-@api_router.get("/all_user_blogs")
+@api_router.get("/all-user-blogs")
 async def get_all_user_blogs(
-    token: str = Depends(oauth2_scheme),
+        token: str = Depends(oauth2_scheme),
+        db: Session = Depends(db_manager.get_db)
 ):
-    supabase = supabase_manager.get_supabase_db()
-    auth_user = supabase.auth.get_user(token)
-    user_id = auth_user.user.id
+    user = UserHandler.get_user(db, token)
 
     documents = NoSqlHandler.read_all("Blogs")
 
-    user_blogs = [doc for doc_id, doc in documents.items() if doc["userid"] == user_id]
+    user_blogs = [doc for doc_id, doc in documents.items() if doc["userid"] == user.id]
 
     return {"user_blogs": user_blogs}
 
@@ -121,9 +117,9 @@ async def get_all_user_blogs(
 async def comment_on_blog(
         blog_guid: str,
         token: str = Depends(oauth2_scheme),
+        db: Session = Depends(db_manager.get_db)
 ):
-    supabase = supabase_manager.get_supabase_db()
-    auth_user = supabase.auth.get_user(token)
+    user = UserHandler.get_user(db, token)
 
     document = NoSqlHandler.read_document(blog_guid, "Blogs")
 
@@ -138,15 +134,15 @@ async def comment_on_blog(
         blog_guid: str,
         comment: str = Body(...),
         token: str = Depends(oauth2_scheme),
+        db: Session = Depends(db_manager.get_db)
 ):
-    supabase = supabase_manager.get_supabase_db()
-    auth_user = supabase.auth.get_user(token)
+    user = UserHandler.get_user(db, token)
 
     document = NoSqlHandler.read_document(blog_guid, "Blogs")
 
     document["comments"].append({
         {
-            "userid": auth_user.user.id,
+            "userid": user.id,
             "comment": comment,
             "date": datetime.utcnow().isoformat(),
         }
@@ -154,3 +150,16 @@ async def comment_on_blog(
     NoSqlHandler.update_document(document, "Blogs")
 
     return {"message": "Blog Commented Successfully"}
+
+@api_router.post("/generate_blog")
+async def generate_blog_for_user(
+        request_data: GenerateBlogSchema,
+        token: str = Depends(oauth2_scheme),
+        db: Session = Depends(db_manager.get_db),
+        gemini_utils: GeminiUtils = Depends(GeminiUtils)
+):
+    user = UserHandler.get_user(db, token)
+
+    response = gemini_utils.generate_blog_post(request_data.title, request_data.topic, request_data.tone)
+
+    return {"title": response["title"], "body": response["body"]}
